@@ -28,13 +28,42 @@ from scalable_real2sim.data_processing.neuralangelo import (
 )
 from scalable_real2sim.output.canonicalize import canonicalize_mesh_from_file
 from scalable_real2sim.output.sdformat import create_sdf
-from scalable_real2sim.robot_payload_id.scripts.identify_grasped_object_payload import (
-    identify_grasped_object_payload,
-)
 from scalable_real2sim.segmentation.detect_object import detect_object
 from scalable_real2sim.segmentation.segment_moving_object_data import (
     segment_moving_obj_data,
 )
+
+
+def identify_payload_for_robot(
+    robot: str,
+    robot_id_dir: str,
+    object_dir: str,
+    object_mesh_path: str,
+    json_output_path: str,
+) -> None:
+    """Runs payload ID with the iiwa joint-torque method or the UR7e F/T method."""
+    if robot == "ur7e":
+        from scalable_real2sim.ur7e_payload_id import (
+            identify_grasped_object_payload_ur7e,
+        )
+
+        identify_grasped_object_payload_ur7e(
+            object_data_path=os.path.join(object_dir, "system_id_data"),
+            json_output_path=json_output_path,
+            object_mesh_path=object_mesh_path,
+            baseline_root=robot_id_dir,
+        )
+    else:
+        from scalable_real2sim.robot_payload_id.scripts.identify_grasped_object_payload import (  # noqa: E501
+            identify_grasped_object_payload,
+        )
+
+        identify_grasped_object_payload(
+            robot_joint_data_path=robot_id_dir,
+            object_joint_data_path=os.path.join(object_dir, "system_id_data"),
+            object_mesh_path=object_mesh_path,
+            json_output_path=json_output_path,
+        )
 
 
 def downsample_images(data_dir: str, num_images: int) -> None:
@@ -383,6 +412,7 @@ def main(
     skip_segmentation: bool = False,
     bundle_sdf_interpolate_missing_vertices: bool = False,
     use_depth: bool = False,
+    robot: str = "iiwa",
 ):
     logging.info("Starting asset generation...")
 
@@ -459,9 +489,10 @@ def main(
             bundle_sdf_inertia_params_path = os.path.join(
                 object_dir, "bundle_sdf_inertial_params.json"
             )
-            identify_grasped_object_payload(
-                robot_joint_data_path=robot_id_dir,
-                object_joint_data_path=os.path.join(object_dir, "system_id_data"),
+            identify_payload_for_robot(
+                robot=robot,
+                robot_id_dir=robot_id_dir,
+                object_dir=object_dir,
                 object_mesh_path=bundle_sdf_mesh_path,
                 json_output_path=bundle_sdf_inertia_params_path,
             )
@@ -519,9 +550,10 @@ def main(
             neuralangelo_inertia_params_path = os.path.join(
                 object_dir, "neuralangelo_inertial_params.json"
             )
-            identify_grasped_object_payload(
-                robot_joint_data_path=robot_id_dir,
-                object_joint_data_path=os.path.join(object_dir, "system_id_data"),
+            identify_payload_for_robot(
+                robot=robot,
+                robot_id_dir=robot_id_dir,
+                object_dir=object_dir,
                 object_mesh_path=neuralangelo_mesh_path,
                 json_output_path=neuralangelo_inertia_params_path,
             )
@@ -572,11 +604,19 @@ if __name__ == "__main__":
     parser.add_argument(
         "--robot-id-dir",
         type=str,
-        required=True,
+        default=None,
         help="Path to the directory where the robot ID data is saved. This should be "
         "the top-level directory that contains all different gripper opening "
         "subdirectories. NOTE that the robot parameters should have already been "
-        "identified.",
+        "identified. Required for --robot iiwa. For --robot ur7e it is optional: a "
+        "library of empty-gripper baseline runs (gripper_position_<P>/), used when "
+        "an object has no baseline_run of its own.",
+    )
+    parser.add_argument(
+        "--robot",
+        choices=["iiwa", "ur7e"],
+        default="iiwa",
+        help="iiwa: joint-torque payload ID (original). ur7e: wrist F/T payload ID.",
     )
     parser.add_argument(
         "--output-dir",
@@ -609,6 +649,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    if args.robot == "iiwa" and args.robot_id_dir is None:
+        parser.error("--robot-id-dir is required for --robot iiwa")
+
     if not os.path.exists(args.data_dir):
         raise FileNotFoundError(f"Data directory {args.data_dir} does not exist.")
 
@@ -622,4 +665,5 @@ if __name__ == "__main__":
         skip_segmentation=args.skip_segmentation,
         bundle_sdf_interpolate_missing_vertices=args.bundle_sdf_interpolate_missing_vertices,
         use_depth=args.use_depth,
+        robot=args.robot,
     )

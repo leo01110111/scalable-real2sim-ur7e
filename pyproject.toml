@@ -24,6 +24,8 @@ vhacdx = "^0.0.8.post2"
 robot-payload-id = {path = "scalable_real2sim/robot_payload_id"}
 torchvision = "0.18.1"
 trimesh = "^4.6.2"
+cvxpy = "^1.5"
+pyyaml = "^6.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.4.0"

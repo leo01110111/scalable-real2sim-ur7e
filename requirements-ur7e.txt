@@ -1,0 +1,6 @@
+numpy
+scipy
+cvxpy>=1.4
+pyyaml
+ur_rtde>=1.5   # only for data collection
+pytest

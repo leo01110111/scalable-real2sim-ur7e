@@ -9,6 +9,9 @@ An overview of our pipeline:
 Some of our reconstructed assets:
 ![result_teaser](assets/object_table.png)
 
+> **UR7e fork:** payload identification with the UR7e wrist F/T sensor instead of
+> iiwa joint torques. See [README_UR7E.md](README_UR7E.md).
+
 ## Installation
 
 This repo uses Poetry for dependency management. To setup this project, first install

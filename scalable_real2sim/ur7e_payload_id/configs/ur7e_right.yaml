@@ -1,0 +1,42 @@
+# UR7e right arm. Network settings match FACTR_Teleop (python_utils/global_configs.py).
+# ExternalControl URCap on the pendant: Host IP = this PC, Custom port = ur_cap_port.
+arm:
+  ip: "192.168.2.2"
+  ur_cap_port: 50003
+  gripper_port: 63352   # Robotiq URCap socket
+
+servo:
+  frequency: 500.0            # RTDE + servoJ rate [Hz]
+  lookahead_time: 0.1
+  gain: 300.0
+  watchdog_min_frequency: 100.0
+  approach_speed: 0.3         # rad/s, max joint, for the approach to q0
+
+gripper:
+  speed: 255
+  force: 128                  # 0..255; lower for fragile objects
+
+# Excitation trajectory (see trajectory.ExcitationConfig). q0 is FACTR's
+# initial_match_joint_pos for this arm. Check the workspace limits for your table.
+excitation:
+  q0: [-1.57, -1.57, -1.57, -1.57, 1.57, 1.57]
+  amp_max: [0.3, 0.25, 0.3, 1.0, 1.0, 1.5]
+  v_max: [0.8, 0.8, 0.8, 1.5, 1.5, 1.5]
+  a_max: [2.0, 2.0, 2.0, 4.0, 4.0, 4.0]
+  duration_s: 20.0
+  base_freq_hz: 0.1
+  num_harmonics: 5
+  ramp_s: 2.0
+  dt: 0.002                   # must equal 1 / servo.frequency
+  tool_length_m: 0.20
+  z_min_m: 0.05
+  r_min_m: 0.20
+  num_candidates: 300
+  seed: 0
+
+identification:
+  cutoff_hz: 6.0
+  trim_s: 0.5
+  gravity_base: [0.0, 0.0, -9.81]   # change if the arm is not mounted upright
+  wrench_frame: auto
+  wrench_point: auto
